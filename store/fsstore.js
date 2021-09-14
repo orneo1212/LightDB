@@ -5,7 +5,9 @@ class FSStore {
     constructor(table) {
         this._tablepath = path.join(process.cwd(), table);
     }
-    //if (!fs.existsSync(this._tablepath)) fs.mkdirSync(this._tablepath);
+    _create_dir() {
+        if (!fs.existsSync(this._tablepath)) fs.mkdirSync(this._tablepath);
+    }
     _get_path(id) {
         return path.join(this._tablepath, id + ".json");
     }
@@ -30,6 +32,7 @@ class FSStore {
     }
 
     new(object) {
+        this._create_dir();
         object._timestamp = Date.now();
         object._id = newid();
         fs.writeFileSync(this._get_path(object._id), JSON.stringify(object));
@@ -37,13 +40,14 @@ class FSStore {
     }
 
     put(object) {
+        this._create_dir();
         object._timestamp = Date.now();
         fs.writeFileSync(this._get_path(object._id), JSON.stringify(object));
         return object._id;
     }
 
     del(id) {
-        fs.unlinkSync(this._get_path(id));
+        if (fs.existsSync(this._get_path(id))) fs.unlinkSync(this._get_path(id));
     }
 }
 
