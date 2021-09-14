@@ -1,0 +1,6 @@
+node_modules
+lightdb-server
+
+**/
+!store
+!tests
