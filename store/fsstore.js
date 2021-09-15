@@ -20,7 +20,12 @@ class FSStore {
     }
 
     list() {
-        var files = fs.readdirSync(this._tablepath);
+        var files;
+        try {
+            files = fs.readdirSync(this._tablepath);
+        } catch (error) {
+            return [];
+        }
         files = files.filter(x => {
             var stat = fs.statSync(path.join(this._tablepath, x));
             return stat.isFile() && x.toLowerCase().endsWith('.json');
