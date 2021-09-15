@@ -1,16 +1,12 @@
-const { FSStore } = require("./store/fsstore");
-
+const { MemoryStore } = require("./store/memorystore");
 class LightDBError extends Error { }
 
-function newid(length = 64) {
-    return '' + Math.random().toString(36).substr(2, length);
-}
 
 class LightDB {
     constructor(table, options) {
         this._table = table;
         this.options = options || {};
-        this._store = this.options._store || new FSStore(table);
+        this._store = this.options.store || new MemoryStore(table);
     }
 
     get(id) {
@@ -36,4 +32,4 @@ class LightDB {
     }
 }
 
-module.exports = { LightDB, LightDBError, newid };
+module.exports = { LightDB, LightDBError };
