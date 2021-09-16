@@ -5,12 +5,17 @@ const PORT = 3000;
 const AUTH_REALM = 'LightDB-Server';
 
 // Basic auth
-const validate = async function (username, password, req, reply) { };
+const validate = async function (username, password, req, reply) {
+    //var user = new Query('_users').where({ username: username, password: password }).run();
+};
 const authenticate = { realm: AUTH_REALM };
 fastify.register(require('fastify-basic-auth'), { validate, authenticate });
 
 // ETag
 fastify.register(require('fastify-etag'));
+
+// Multiparm file upload
+fastify.register(require('fastify-multipart'));
 
 function make_result(data) {
     return { error: false, value: data };
@@ -95,7 +100,7 @@ fastify.after(() => {
 const start = async () => {
     try {
         console.log('Server started at port', PORT);
-        await fastify.listen(PORT);
+        await fastify.listen(PORT, "0.0.0.0");
     } catch (err) {
         fastify.log.error(err);
         process.exit(1);

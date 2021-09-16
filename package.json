@@ -4,7 +4,8 @@
   "description": "Lightweight JSON document store",
   "main": "server.js",
   "scripts": {
-    "test": "tape \"tests/**/*.js\" | faucet"
+    "test": "tape \"tests/**/*.js\" | faucet",
+    "testraw": "tape \"tests/**/*.js\""
   },
   "repository": {
     "type": "git",
@@ -27,6 +28,7 @@
     "audit": "^0.0.6",
     "fastify": "^3.21.0",
     "fastify-basic-auth": "^2.1.0",
-    "fastify-etag": "^2.1.0"
+    "fastify-etag": "^2.1.0",
+    "fastify-multipart": "^5.0.0"
   }
 }
