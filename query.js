@@ -9,6 +9,10 @@ class QueryResult {
     get(index) {
         return this._docs[index] || null;
     }
+
+    all() {
+        return this._docs;
+    }
 }
 
 function filter_items(items, conditions) {
@@ -36,6 +40,7 @@ class Query {
         this._db = db;
         this._conditions = [];
         this._limit = null;
+        if (typeof this._db !== 'object') throw new Error("Query without correct db");
     }
 
     where(condition, operand = 'and') {
