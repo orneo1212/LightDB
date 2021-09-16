@@ -3,8 +3,9 @@ const fs = require('fs');
 const { newid } = require('../utils');
 
 class FSStore {
-    constructor(table) {
-        this._tablepath = path.join(process.cwd(), table);
+    constructor(table, options = {}) {
+        this._dir_path = options.dir_path || process.cwd();
+        this._tablepath = path.join(this._dir_path, table);
     }
     _create_dir() {
         if (!fs.existsSync(this._tablepath)) fs.mkdirSync(this._tablepath);
@@ -33,7 +34,7 @@ class FSStore {
         });
         return files.map(x => {
             var stat = fs.statSync(path.join(this._tablepath, x));
-            return { _id: x.substr(0, x.length - 5), _timestamp: Math.floor(stat.mtimeMs * 1000) };
+            return { _id: x.substr(0, x.length - 5), _timestamp: Math.floor(stat.mtimeMs) };
         });
     }
 
@@ -57,4 +58,4 @@ class FSStore {
     }
 }
 
-module.exports = { FSStore };
+module.exports = FSStore;
