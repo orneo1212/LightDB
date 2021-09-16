@@ -1,18 +1,29 @@
 const fastify = require('fastify')({ logger: true });
-const { LightDB, newid } = require('./lightdb');
+const { LightDB } = require('./lightdb');
+const Query = require('./query');
+const FSStore = require('./store/fsstore');
+
 const VERSION = '0.1.0';
 const PORT = 3000;
 const AUTH_REALM = 'LightDB-Server';
 
-// Basic auth
-const validate = async function (username, password, req, reply) {
-    //var user = new Query('_users').where({ username: username, password: password }).run();
-};
-const authenticate = { realm: AUTH_REALM };
-fastify.register(require('fastify-basic-auth'), { validate, authenticate });
+// LightDB instance maker
+function makeDB(table) {
+    return new LightDB(table, { store: new FSStore(table) });
+}
 
 // ETag
 fastify.register(require('fastify-etag'));
+
+// Basic auth
+const validate = async function (username, password, req, reply) {
+    var db = makeDB("_users");
+    var user = new Query(db).where({ username: username, password: password }).run();
+    if (user.get(0)) return;
+    else throw Error();
+};
+const authenticate = { realm: AUTH_REALM };
+fastify.register(require('fastify-basic-auth'), { validate, authenticate });
 
 // Multiparm file upload
 fastify.register(require('fastify-multipart'));
@@ -36,8 +47,8 @@ fastify.after(() => {
 
     // Get all documents in table
     fastify.get('/:table', authenticated_only, async (request, reply) => {
-        var params = request.params;
-        var objects = new LightDB(params.table).list();
+        var db = makeDB(request.params.table);
+        var objects = db.list();
         return make_result(objects);
     });
 
@@ -45,14 +56,15 @@ fastify.after(() => {
     fastify.post('/:table', authenticated_only, async (request, reply) => {
         var params = request.params;
         if (request.body._id) return make_error(reply, 403, "ID should not exists in post");
-        var id = new LightDB(params.table).put(request.body);
+        var db = makeDB(request.params.table);
+        var id = db.put(request.body);
         return make_result(id);
     });
 
     // Update/Create new document by ID (create when not exists)
     fastify.put('/:table/:id', authenticated_only, async (request, reply) => {
         if (request.body._id != request.params.id) return make_error(reply, 403, "ID should match body _id");
-        var db = new LightDB(request.params.table);
+        var db = makeDB(request.params.table);
         var id = db.put(request.body, true);
         return make_result(id);
     });
@@ -60,7 +72,7 @@ fastify.after(() => {
     // Update partialally existing document by ID
     fastify.patch('/:table/:id', authenticated_only, async (request, reply) => {
         if (request.body._id != request.params.id) return make_error(reply, 403, "ID should match body _id");
-        var db = new LightDB(request.params.table);
+        var db = makeDB(request.params.table);
         if (!db.has(request.body._id)) return make_error(reply, 404, "Not exists");
         var doc = db.get(request.body._id);
         for (e in request.body) {
@@ -72,7 +84,7 @@ fastify.after(() => {
 
     // Delete existing document by ID
     fastify.delete('/:table/:id', authenticated_only, async (request, reply) => {
-        var db = new LightDB(request.params.table);
+        var db = makeDB(request.params.table);
         if (!db.has(request.params.id)) return make_error(reply, 404, "Not exists");
         db.del(request.params.id);
         return make_result(request.params.id);
@@ -81,7 +93,8 @@ fastify.after(() => {
     // Get document by ID
     fastify.get('/:table/:id', authenticated_only, async (request, reply) => {
         var params = request.params;
-        var obj = new LightDB(params.table).get(params.id);
+        var db = makeDB(request.params.table);
+        var obj = db.get(params.id);
         if (obj == null) {
             return make_error(reply, 404, "Not found");
         }
@@ -90,7 +103,8 @@ fastify.after(() => {
 
     // Head document by ID 
     fastify.head('/:table/:id', authenticated_only, async (request, reply) => {
-        var hasit = new LightDB(request.params.table).has(request.params.id);
+        var db = makeDB(request.params.table);
+        var hasit = db.has(request.params.id);
         reply.statusCode = 200;
         if (!hasit) reply.statusCode = 404;
         return {};
