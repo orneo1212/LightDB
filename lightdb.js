@@ -1,4 +1,5 @@
 const { MemoryStore } = require("./store/memorystore");
+const Query = require('./query');
 class LightDBError extends Error { }
 
 
@@ -32,4 +33,4 @@ class LightDB {
     }
 }
 
-module.exports = { LightDB, LightDBError };
+module.exports = { LightDB, LightDBError, Query };
