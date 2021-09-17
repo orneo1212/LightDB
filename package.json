@@ -29,6 +29,7 @@
     "fastify": "^3.21.0",
     "fastify-basic-auth": "^2.1.0",
     "fastify-etag": "^2.1.0",
-    "fastify-multipart": "^5.0.0"
+    "fastify-multipart": "^5.0.0",
+    "fastify-static": "^4.2.3"
   }
 }

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<title>LightDB Client</title>
+
+<style>
+    .result .resultjson {
+        width: 500px;
+        height: 200px;
+    }
+</style>
+
+<div class="url">
+    <label>LightDB API</label>
+    <input class="apiurl" placeholder="URL" value="http://127.0.0.1:3000/db" />
+</div>
+
+<div class="path">
+    <label title="like /_users">LightDB API path</label>
+    <input class="urlpath" placeholder="URL path" value="" />
+</div>
+
+<div class="call">
+    <button class="btn callapi">CALL API</button>
+</div>
+
+<div class="result">
+    <textarea readonly="1" class="resultjson" value=""></textarea>
+</div>
+
+<script lang="javascript">
+    function getURL() {
+        return document.querySelector('.url .apiurl').value;
+    }
+    function getPATH() {
+        return document.querySelector('.path .urlpath').value;
+    }
+    function callAPI(path = "", callback) {
+        var url = getURL()
+        console.log('callAPI', url, path)
+        var req = new XMLHttpRequest();
+        req.onreadystatechange = function () {
+            if (req.readyState != 4) return;
+            var obj = JSON.parse(req.responseText)
+            if (callback) callback(url, path, obj);
+            document.querySelector('.result .resultjson').value = JSON.stringify(obj, null, 2)
+        }
+        req.open('GET', url + path, true);
+        req.send(null);
+    }
+
+
+    document.onreadystatechange = function (evt) {
+        document.querySelector('.call .callapi').onclick = function (evt) {
+            callAPI(getPATH());
+        }
+    }
+</script>
