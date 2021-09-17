@@ -1,5 +1,5 @@
-const { LightDB } = require('../lightdb');
-const FSStore = require('../store/fsstore');
+const { LightDB } = require('../../lightdb/lightdb');
+const FSStore = require('../../store/fsstore');
 
 function make_result(data) {
     return { error: false, value: data };

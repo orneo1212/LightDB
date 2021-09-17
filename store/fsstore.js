@@ -1,10 +1,10 @@
 const path = require('path');
 const fs = require('fs');
-const { newid } = require('../utils');
+const { newid } = require('../lightdb/utils');
 
 class FSStore {
     constructor(table, options = {}) {
-        this._dir_path = options.dir_path || process.cwd();
+        this._dir_path = options.dir_path || path.join(process.cwd(), 'data');
         this._tablepath = path.join(this._dir_path, table);
     }
     _create_dir() {

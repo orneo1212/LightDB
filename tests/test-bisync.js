@@ -1,5 +1,5 @@
 var test = require('tape');
-var bisync = require('../bisync');
+var bisync = require('../lightdb/bisync');
 
 test('test bisync sync_item - remote change', function (t) {
     var objA = { "test": 1 };

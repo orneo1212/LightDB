@@ -1,8 +1,8 @@
 const path = require('path');
 const fastify = require('fastify')({ logger: true });
-const Query = require('./query');
-const genericroutes = require('./routes/generic');
-const dbroutes = require('./routes/db');
+const Query = require('./lightdb/query');
+const genericroutes = require('./server/routes/generic');
+const dbroutes = require('./server/routes/db');
 
 // SETTINGS
 const PORT = 3000;

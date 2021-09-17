@@ -1,4 +1,4 @@
-const { MemoryStore } = require("./store/memorystore");
+const { MemoryStore } = require("../store/memorystore");
 const Query = require('./query');
 class LightDBError extends Error { }
 
