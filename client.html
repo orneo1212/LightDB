@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <title>LightDB Client</title>
+<script src="twix.js"></script>
 
 <style>
     .result .resultjson {
@@ -23,7 +24,11 @@
 </div>
 
 <div class="result">
-    <textarea readonly="1" class="resultjson" value=""></textarea>
+    <textarea class="resultjson" value=""></textarea>
+</div>
+
+<div class="update">
+    <button class="btn update">Update</button>
 </div>
 
 <script lang="javascript">
@@ -33,24 +38,29 @@
     function getPATH() {
         return document.querySelector('.path .urlpath').value;
     }
-    function callAPI(path = "", callback) {
-        var url = getURL()
-        console.log('callAPI', url, path)
-        var req = new XMLHttpRequest();
-        req.onreadystatechange = function () {
-            if (req.readyState != 4) return;
-            var obj = JSON.parse(req.responseText)
-            if (callback) callback(url, path, obj);
-            document.querySelector('.result .resultjson').value = JSON.stringify(obj, null, 2)
-        }
-        req.open('GET', url + path, true);
-        req.send(null);
+    function getDATA() {
+        return document.querySelector('.result .resultjson').value;
     }
-
 
     document.onreadystatechange = function (evt) {
         document.querySelector('.call .callapi').onclick = function (evt) {
-            callAPI(getPATH());
+            Twix.get(getPATH(), null, function (obj) {
+                if (typeof obj == 'string') obj = JSON.parse(obj)
+                document.querySelector('.result .resultjson').value = JSON.stringify(obj, null, 2)
+            });
+        }
+
+        document.querySelector('.update .btn.update').onclick = function (evt) {
+            var data = getDATA();
+            Twix.ajax({
+                url: getPATH(),
+                type: 'put',
+                headers: { 'Content-Type': 'application/json' },
+                data: data,
+                success: function (data) {
+                    console.log(data);
+                }
+            });
         }
     }
 </script>
