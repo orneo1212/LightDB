@@ -44,7 +44,7 @@
 
     document.onreadystatechange = function (evt) {
         document.querySelector('.call .callapi').onclick = function (evt) {
-            Twix.get(getPATH(), null, function (obj) {
+            Twix.get(getURL() + getPATH(), null, function (obj) {
                 if (typeof obj == 'string') obj = JSON.parse(obj)
                 document.querySelector('.result .resultjson').value = JSON.stringify(obj, null, 2)
             });
@@ -53,7 +53,7 @@
         document.querySelector('.update .btn.update').onclick = function (evt) {
             var data = getDATA();
             Twix.ajax({
-                url: getPATH(),
+                url: getURL() + getPATH(),
                 type: 'put',
                 headers: { 'Content-Type': 'application/json' },
                 data: data,
