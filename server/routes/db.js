@@ -16,19 +16,32 @@ function makeDB(table) {
     return new LightDB(table, { store: new FSStore(table) });
 }
 
+async function check_user_table(request, reply) {
+    if (request.params.table) {
+        if (request.isadmin) return;
+        if (request.usertables.find(x => x == request.params.table) != undefined) return;
+        else {
+            var err = make_error(reply, 403, "No access");
+            reply.send(err);
+            return err;
+        }
+    }
+    return;
+}
+
 var router = function (fastify, opts, done) {
     var authenticated_only = { onRequest: fastify.basicAuth };
+    var authandusertable_only = { onRequest: [fastify.basicAuth, check_user_table] };
 
     // Get all documents in table
-    fastify.get('/:table', authenticated_only, async (request, reply) => {
+    fastify.get('/:table', authandusertable_only, async (request, reply) => {
         var db = makeDB(request.params.table);
         var objects = db.list();
         return make_result(objects);
     });
 
     // Add new document return new ID
-    fastify.post('/:table', authenticated_only, async (request, reply) => {
-        var params = request.params;
+    fastify.post('/:table', authandusertable_only, async (request, reply) => {
         if (request.body._id) return make_error(reply, 403, "ID should not exists in post");
         var db = makeDB(request.params.table);
         var id = db.put(request.body);
@@ -36,7 +49,7 @@ var router = function (fastify, opts, done) {
     });
 
     // Update/Create new document by ID (create when not exists)
-    fastify.put('/:table/:id', authenticated_only, async (request, reply) => {
+    fastify.put('/:table/:id', authandusertable_only, async (request, reply) => {
         if (request.body._id != request.params.id) return make_error(reply, 403, "ID should match body _id");
         var db = makeDB(request.params.table);
         var id = db.put(request.body, true);
@@ -44,7 +57,7 @@ var router = function (fastify, opts, done) {
     });
 
     // Update partialally existing document by ID
-    fastify.patch('/:table/:id', authenticated_only, async (request, reply) => {
+    fastify.patch('/:table/:id', authandusertable_only, async (request, reply) => {
         if (request.body._id != request.params.id) return make_error(reply, 403, "ID should match body _id");
         var db = makeDB(request.params.table);
         if (!db.has(request.body._id)) return make_error(reply, 404, "Not exists");
@@ -57,7 +70,7 @@ var router = function (fastify, opts, done) {
     });
 
     // Delete existing document by ID
-    fastify.delete('/:table/:id', authenticated_only, async (request, reply) => {
+    fastify.delete('/:table/:id', authandusertable_only, async (request, reply) => {
         var db = makeDB(request.params.table);
         if (!db.has(request.params.id)) return make_error(reply, 404, "Not exists");
         db.del(request.params.id);
@@ -65,7 +78,7 @@ var router = function (fastify, opts, done) {
     });
 
     // Get document by ID
-    fastify.get('/:table/:id', authenticated_only, async (request, reply) => {
+    fastify.get('/:table/:id', authandusertable_only, async (request, reply) => {
         var params = request.params;
         var db = makeDB(request.params.table);
         var obj = db.get(params.id);
@@ -76,7 +89,7 @@ var router = function (fastify, opts, done) {
     });
 
     // Head document by ID 
-    fastify.head('/:table/:id', authenticated_only, async (request, reply) => {
+    fastify.head('/:table/:id', authandusertable_only, async (request, reply) => {
         var db = makeDB(request.params.table);
         var hasit = db.has(request.params.id);
         reply.statusCode = 200;

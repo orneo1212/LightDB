@@ -1,5 +1,5 @@
 const path = require('path');
-const fastify = require('fastify')({ logger: true });
+const fastify = require('fastify')({ logger: true, ignoreTrailingSlash: true });
 const Query = require('./lightdb/query');
 const genericroutes = require('./server/routes/generic');
 const dbroutes = require('./server/routes/db');
@@ -23,8 +23,13 @@ fastify.register(require('fastify-multipart'));
 // Basic auth
 const validate = async function (username, password, req, reply) {
     var db = dbroutes.makeDB("_users");
-    var user = new Query(db).where({ username: username, password: password }).run();
-    if (user.get(0)) return;
+    var users = new Query(db).where({ username: username, password: password }).run();
+    var user = users.get(0);
+    if (user) {
+        req.usertables = user.tables ? user.tables : [];
+        req.isadmin = user.admin ? true : false;
+        return;
+    }
     else throw Error();
 };
 const authenticate = { realm: AUTH_REALM };
