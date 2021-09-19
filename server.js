@@ -20,9 +20,12 @@ fastify.register(require('fastify-etag'));
 // Multiparm file upload
 fastify.register(require('fastify-multipart'));
 
+// LightDB database plugin
+fastify.register(require('./server/db.plugin'));
+
 // Basic auth
 const validate = async function (username, password, req, reply) {
-    var db = dbroutes.makeDB("_users");
+    var db = req.getlightDB("_users");
     var users = new Query(db).where({ username: username, password: password }).run();
     var user = users.get(0);
     if (user) {
