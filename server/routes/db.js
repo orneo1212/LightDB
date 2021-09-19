@@ -1,3 +1,5 @@
+const path = require('path');
+const fs = require('fs');
 const { LightDB } = require('../../lightdb/lightdb');
 const FSStore = require('../../store/fsstore');
 
@@ -26,6 +28,23 @@ async function check_user_table(request, reply) {
 var router = function (fastify, opts, done) {
     var authenticated_only = { onRequest: fastify.basicAuth };
     var authandusertable_only = { onRequest: [fastify.basicAuth, check_user_table] };
+
+    // Get all tables names
+    fastify.get('/tables', authenticated_only, async (request, reply) => {
+        var datadir = path.join(__dirname, '../../data');
+        var tables;
+        try {
+            tables = fs.readdirSync(datadir);
+        } catch (error) {
+            return [];
+        }
+        tables = tables.filter(x => {
+            var stat = fs.statSync(path.join(datadir, x));
+            return stat.isDirectory() && fs.readdirSync(path.join(datadir, x)).find(f => f.toLowerCase().endsWith('.json'));
+        });
+        console.log(tables);
+        return tables;
+    });
 
     // Get all documents in table
     fastify.get('/:table', authandusertable_only, async (request, reply) => {
