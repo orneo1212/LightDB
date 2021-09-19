@@ -42,7 +42,6 @@ var router = function (fastify, opts, done) {
             var stat = fs.statSync(path.join(datadir, x));
             return stat.isDirectory() && fs.readdirSync(path.join(datadir, x)).find(f => f.toLowerCase().endsWith('.json'));
         });
-        console.log(tables);
         return tables;
     });
 
