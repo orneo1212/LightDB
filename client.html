@@ -7,21 +7,46 @@
         width: 500px;
         height: 200px;
     }
+
+    .documents .list .document:hover {
+        font-weight: bold;
+    }
+
+    .documents .list .document {
+        cursor: pointer;
+        display: inline-block;
+        padding: 2px 5px;
+    }
+
+    .tables .tablelist .tablename {
+        cursor: pointer;
+        display: inline-block;
+        padding: 2px 5px;
+    }
+
+    .tables .tablelist .tablename:hover {
+        font-weight: bold;
+    }
 </style>
 
 <div class="url">
     <label>LightDB API</label>
-    <input class="apiurl" placeholder="URL" value="http://127.0.0.1:3000/db" />
+    <input class="apiurl" placeholder="URL" value="http://127.0.0.1:3000" onchange="get_tablelist()" />
 </div>
 
-<div class="path">
-    <label title="like /_users">LightDB API path</label>
-    <input class="urlpath" placeholder="URL path" value="" />
+<div class='tables'>
+    <h3>Tables</h3>
+    <div class='tablelist'></div>
 </div>
 
-<div class="call">
-    <button class="btn callapi">CALL API</button>
+<div class='documents'>
+    <h3>Documents</h3>
+    <div class='list'>
+
+    </div>
 </div>
+
+<hr />
 
 <div class="result">
     <textarea class="resultjson" value=""></textarea>
@@ -32,28 +57,84 @@
 </div>
 
 <script lang="javascript">
+    var state = { path: "" };
     function getURL() {
         return document.querySelector('.url .apiurl').value;
-    }
-    function getPATH() {
-        return document.querySelector('.path .urlpath').value;
     }
     function getDATA() {
         return document.querySelector('.result .resultjson').value;
     }
 
-    document.onreadystatechange = function (evt) {
-        document.querySelector('.call .callapi').onclick = function (evt) {
-            Twix.get(getURL() + getPATH(), null, function (obj) {
-                if (typeof obj == 'string') obj = JSON.parse(obj)
-                document.querySelector('.result .resultjson').value = JSON.stringify(obj, null, 2)
-            });
+    function getDocument(table, id, callback) {
+        if (!table || !id) throw new Error('No arguments for getDocument');
+        Twix.ajax({
+            url: getURL() + '/db/' + table + '/' + id,
+            success: callback
+        });
+    }
+
+    function fill_documents(documents, table) {
+        var elem = document.querySelector('.documents .list')
+        elem.innerHTML = "";
+        for (var i = 0; i < documents.length; i++) {
+            var doc = documents[i];
+            var docelem = document.createElement('div');
+            docelem.doc = doc;
+            docelem.classList.add('document');
+            docelem.setAttribute('data-id', doc._id);
+            var datetime = "";
+            if (doc._timestamp) {
+                datetime = datetime + new Date(doc._timestamp).toLocaleDateString();
+                datetime = datetime + " " + new Date(doc._timestamp).toLocaleTimeString();
+            }
+            docelem.setAttribute('title', datetime);
+            docelem.innerText = doc._id;
+            docelem.onclick = function (evt) {
+                getDocument(table, this.getAttribute("data-id"), function (doc) {
+                    document.querySelector('.result .resultjson').value = JSON.stringify(doc, null, 2)
+                    state.path = "/db/" + table + "/" + doc._id;
+                })
+            };
+
+            elem.append(docelem);
         }
+    }
+
+    function get_tablelist() {
+        var elem = document.querySelector('.tablelist')
+        Twix.ajax({
+            url: getURL() + '/db/tables',
+            success: async function (data) {
+                elem.innerHTML = "";
+                for (var i = 0; i < data.length; i++) {
+                    var tableelem = document.createElement('a');
+                    tableelem.classList.add('tablename');
+                    tableelem.setAttribute('data-table', data[i]);
+                    tableelem.innerText = data[i];
+                    tableelem.onclick = async function (evt) {
+                        var self = this;
+                        Twix.get(getURL() + '/db/' + this.getAttribute('data-table'), null, function (obj) {
+                            if (obj && obj.value) {
+                                fill_documents(obj.value, self.getAttribute('data-table'));
+                            }
+                        })
+                    }
+                    elem.append(tableelem)
+                }
+            }
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", function (evt) {
+        document.querySelector('.result .resultjson').value == "";
+        get_tablelist();
 
         document.querySelector('.update .btn.update').onclick = function (evt) {
+            if (!state.path) return;
+            console.log(state.path)
             var data = getDATA();
             Twix.ajax({
-                url: getURL() + getPATH(),
+                url: getURL() + state.path,
                 type: 'put',
                 headers: { 'Content-Type': 'application/json' },
                 data: data,
@@ -62,5 +143,5 @@
                 }
             });
         }
-    }
+    });
 </script>
