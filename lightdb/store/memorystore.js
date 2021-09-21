@@ -27,7 +27,7 @@ class MemoryStore {
 
     put(object) {
         object._timestamp = Date.now();
-        this._store[id] = object;
+        this._store[object._id] = object;
         return object._id;
     }
 
