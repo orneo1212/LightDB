@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "test": "tape \"tests/**/*.js\" | faucet",
-    "testraw": "tape \"tests/**/*.js\""
+    "testraw": "tape \"tests/**/*.js\"",
+    "buildbrowser": "browserify -e browserbundle.js -o public/lightdb.browser.js"
   },
   "repository": {
     "type": "git",
@@ -20,12 +21,14 @@
   "author": "orneo1212",
   "license": "ISC",
   "devDependencies": {
+    "browserify": "^17.0.0",
     "faucet": "^0.0.1",
     "pkg": "^5.3.2",
     "tape": "^5.3.1"
   },
   "dependencies": {
     "audit": "^0.0.6",
+    "axios": "^0.21.4",
     "fastify": "^3.21.0",
     "fastify-basic-auth": "^2.1.0",
     "fastify-etag": "^2.1.0",
