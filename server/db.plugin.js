@@ -1,7 +1,7 @@
 const fp = require('fastify-plugin');
 
 const { LightDB } = require("../lightdb/lightdb");
-const FSStore = require("../store/fsstore");
+const FSStore = require("../lightdb/store/fsstore");
 
 function DBPlugin(app, opts, done) {
     app.decorateRequest('getlightDB', function (table) {

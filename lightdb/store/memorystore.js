@@ -1,4 +1,4 @@
-const { newid } = require('../lightdb/utils');
+const { newid } = require('../utils');
 
 class MemoryStore {
     constructor(table) {

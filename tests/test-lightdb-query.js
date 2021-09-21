@@ -1,5 +1,5 @@
 var test = require('tape');
-const { MemoryStore } = require('../store/memorystore');
+const { MemoryStore } = require('../lightdb/store/memorystore');
 const { LightDB, Query } = require('../lightdb/lightdb');
 
 test('test LightDB Query', function (t) {

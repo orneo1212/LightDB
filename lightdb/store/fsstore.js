@@ -1,6 +1,6 @@
 const path = require('path');
 const fs = require('fs');
-const { newid } = require('../lightdb/utils');
+const { newid } = require('../utils');
 
 class FSStore {
     constructor(table, options = {}) {
