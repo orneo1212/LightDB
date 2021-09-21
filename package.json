@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "test": "tape \"tests/**/*.js\" | faucet",
-    "testraw": "tape \"tests/**/*.js\""
+    "testraw": "tape \"tests/**/*.js\"",
+    "build": "pkg -c package.json -o dist/lightdb-server server.js"
   },
   "repository": {
     "type": "git",
@@ -32,5 +33,17 @@
     "fastify-multipart": "^5.0.0",
     "fastify-plugin": "^3.0.0",
     "fastify-static": "^4.2.3"
+  },
+  "pkg": {
+    "targets": [
+      "node14-linux-x64"
+    ],
+    "assets": "public/**/*",
+    "scripts": [
+      "store/**/*.js",
+      "server/**/*.js",
+      "lightdb/**/*.js"
+    ],
+    "outputPath": "dist"
   }
 }
