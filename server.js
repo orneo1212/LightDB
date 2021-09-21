@@ -39,7 +39,7 @@ const authenticate = { realm: AUTH_REALM };
 fastify.register(require('fastify-basic-auth'), { validate, authenticate });
 
 // Register routers
-fastify.register(genericroutes.router, { prefix: '' });
+fastify.register(genericroutes.router, { prefix: '', publicdir: '.' });
 fastify.register(dbroutes.router, { prefix: '/db' });
 
 const start = async () => {

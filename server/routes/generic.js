@@ -9,7 +9,8 @@ var router = function (fastify, opts, done) {
 
     // Client HTML
     fastify.get('/client', async (request, reply) => {
-        return reply.sendFile('client.html', path.join(__dirname, '../../'));
+        var ppath = path.resolve(opts.publicdir || ".");
+        return reply.sendFile('client.html', ppath);
     });
 
     done();
