@@ -4,6 +4,7 @@ const { LightDB } = require('./lightdb/lightdb');
 const { MemoryStore } = require('./lightdb/store/memorystore');
 const { LightDBRemoteStore } = require('./lightdb/store/lightdb_remote');
 const { newid } = require('./lightdb/utils');
+const axios = require('axios').default;
 
 function createLightDB(url, table) {
     if (!url) throw new Error("createLightDB needs table or url and table specified");
@@ -16,9 +17,9 @@ function createLightDB(url, table) {
     }
     return new LightDB(table, { store: store });
 }
-global.LightDB = { createLightDB, newid };
+global.LightDB = { createLightDB, newid, axios };
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./lightdb/lightdb":2,"./lightdb/store/lightdb_remote":4,"./lightdb/store/memorystore":5,"./lightdb/utils":6}],2:[function(require,module,exports){
+},{"./lightdb/lightdb":2,"./lightdb/store/lightdb_remote":4,"./lightdb/store/memorystore":5,"./lightdb/utils":6,"axios":7}],2:[function(require,module,exports){
 const { MemoryStore } = require("./store/memorystore");
 const Query = require('./query');
 class LightDBError extends Error { }

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <title>LightDB Client</title>
-<script src="twix.js"></script>
+<script src="lightdb.browser.js"></script>
 
 <style>
     .result .resultjson {
@@ -58,6 +58,7 @@
 
 <script lang="javascript">
     var state = { path: "" };
+
     function getURL() {
         return document.querySelector('.url .apiurl').value;
     }
@@ -65,17 +66,10 @@
         return document.querySelector('.result .resultjson').value;
     }
 
-    function getDocument(table, id, callback) {
-        if (!table || !id) throw new Error('No arguments for getDocument');
-        Twix.ajax({
-            url: getURL() + '/db/' + table + '/' + id,
-            success: callback
-        });
-    }
-
     function fill_documents(documents, table) {
         var elem = document.querySelector('.documents .list')
         elem.innerHTML = "";
+        var lightdb = LightDB.createLightDB(getURL(), table);
         for (var i = 0; i < documents.length; i++) {
             var doc = documents[i];
             var docelem = document.createElement('div');
@@ -89,11 +83,10 @@
             }
             docelem.setAttribute('title', datetime);
             docelem.innerText = doc._id;
-            docelem.onclick = function (evt) {
-                getDocument(table, this.getAttribute("data-id"), function (doc) {
-                    document.querySelector('.result .resultjson').value = JSON.stringify(doc, null, 2)
-                    state.path = "/db/" + table + "/" + doc._id;
-                })
+            docelem.onclick = async function (evt) {
+                var doc = await lightdb.get(this.getAttribute("data-id"))
+                document.querySelector('.result .resultjson').value = JSON.stringify(doc, null, 2);
+                state.path = "/db/" + table + "/" + doc._id;
             };
 
             elem.append(docelem);
@@ -102,46 +95,38 @@
 
     function get_tablelist() {
         var elem = document.querySelector('.tablelist')
-        Twix.ajax({
-            url: getURL() + '/db/tables',
-            success: async function (data) {
-                elem.innerHTML = "";
-                for (var i = 0; i < data.length; i++) {
-                    var tableelem = document.createElement('a');
-                    tableelem.classList.add('tablename');
-                    tableelem.setAttribute('data-table', data[i]);
-                    tableelem.innerText = data[i];
-                    tableelem.onclick = async function (evt) {
-                        var self = this;
-                        Twix.get(getURL() + '/db/' + this.getAttribute('data-table'), null, function (obj) {
-                            if (obj && obj.value) {
-                                fill_documents(obj.value, self.getAttribute('data-table'));
-                            }
-                        })
+        LightDB.axios.get(getURL() + '/db/tables').then((data) => {
+            elem.innerHTML = "";
+            data = data.data;
+            for (var i = 0; i < data.length; i++) {
+                var tableelem = document.createElement('a');
+                tableelem.classList.add('tablename');
+                tableelem.setAttribute('data-table', data[i]);
+                tableelem.innerText = data[i];
+                tableelem.onclick = async function (evt) {
+                    var self = this;
+                    var table = this.getAttribute('data-table');
+                    var lightdb = LightDB.createLightDB(getURL(), table);
+                    state.table = table;
+                    var list = await lightdb.list();
+                    if (list) {
+                        fill_documents(list, table);
                     }
-                    elem.append(tableelem)
                 }
+                elem.append(tableelem)
             }
-        });
+        })
     }
 
     document.addEventListener("DOMContentLoaded", function (evt) {
         document.querySelector('.result .resultjson').value == "";
         get_tablelist();
 
-        document.querySelector('.update .btn.update').onclick = function (evt) {
+        document.querySelector('.update .btn.update').onclick = async function (evt) {
             if (!state.path) return;
-            console.log(state.path)
             var data = getDATA();
-            Twix.ajax({
-                url: getURL() + state.path,
-                type: 'put',
-                headers: { 'Content-Type': 'application/json' },
-                data: data,
-                success: function (data) {
-                    console.log(data);
-                }
-            });
+            var lightdb = LightDB.createLightDB(getURL(), state.table);
+            await lightdb.put(JSON.parse(getDATA()), true);
         }
     });
 </script>
