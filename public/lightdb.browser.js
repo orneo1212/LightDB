@@ -19,9 +19,155 @@ function createLightDB(url, table) {
 }
 global.LightDB = { createLightDB, newid, axios };
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./lightdb/lightdb":2,"./lightdb/store/lightdb_remote":4,"./lightdb/store/memorystore":5,"./lightdb/utils":6,"axios":7}],2:[function(require,module,exports){
+},{"./lightdb/lightdb":3,"./lightdb/store/lightdb_remote":6,"./lightdb/store/memorystore":7,"./lightdb/utils":8,"axios":9}],2:[function(require,module,exports){
+class SyncConflictException extends Error { }
+class ArraySyncAdapter {
+  constructor(objects) {
+    this._objects = objects;
+  }
+  list() {
+    return this._objects.map(x => {
+      return { _id: x._id, _timestamp: x._timestamp };
+    });
+  }
+  get(itemid) {
+    var item = this._objects.filter(i => i._id == itemid);
+    return item ? item[0] : null;
+  }
+  has(itemid) {
+    return this._objects.filter(i => i._id == itemid).length ? true : false;
+  }
+  put(item) {
+    this._objects.push(item);
+  }
+  del(itemid) {
+    var item = this.get(itemid);
+    if (item) this._objects.splice(this._objects.indexOf(item), 1);
+  }
+}
+
+
+/** Deep Merge objects.
+ * First from `objectB` to `objectA` 
+ * @param objectA - First object (e.g. Local object)
+ * @param objectB - First object (e.g. Remote object)
+*/
+function merge_objects(objectA, objectB, skip_functions = true) {
+  function merge_properties(target, key, value) {
+    if (typeof value === "function" && skip_functions) return;
+    if (typeof value === "object") {
+      if (!target[key]) target[key] = {};
+      merge_objects(target[key], value);
+      return;
+    }
+    target[key] = value;
+  }
+  Object.entries(objectB).forEach(([k, v]) => merge_properties(objectA, k, v));
+  Object.entries(objectA).forEach(([k, v]) => merge_properties(objectB, k, v));
+}
+
+
+function _get_timestamp(item) { return item._timestamp || 0; }
+
+function deepEqual(object1, object2) {
+  function isObject(object) { return object != null && typeof object === 'object'; }
+  const keys1 = Object.keys(object1);
+  const keys2 = Object.keys(object2);
+  if (keys1.length !== keys2.length) return false;
+  for (const key of keys1) {
+    const val1 = object1[key];
+    const val2 = object2[key];
+    const areObjects = isObject(val1) && isObject(val2);
+    if (areObjects && !deepEqual(val1, val2) || !areObjects && val1 !== val2) return false;
+  }
+  return true;
+}
+
+function diff_objects(objectA, objectB) {
+  var diff = [];
+  var newkeys_in_objectA = Object.keys(objectA).filter(x => objectB[x] === undefined);
+  Object.entries(objectB).forEach(([k, v]) => {
+    // skip objects when are deepEqual 
+    if (typeof v === 'object' && typeof objectA[k] === 'object' && deepEqual(v, objectA[k])) return;
+    // Is it Add or Change?
+    if (objectA[k] !== v) diff.push({ _key: k, _action: objectA[k] === undefined ? 'add' : 'change', value: v });
+  });
+  newkeys_in_objectA.forEach(key => diff.push({ _key: key, _action: 'remove', value: objectA[key] }));
+  return diff;
+}
+
+/**
+ * Sync objects with the same `_id` by merging data beetween data checking `_timestamp` when present
+ * @param {Object} itemA 
+ * @param {Object} itemB 
+ */
+function sync_item(itemA, itemB) {
+  if ((itemA._id || itemB._id) && itemA._id != itemB._id) throw new Error("Trying sync objects with different or without `_id`s A:" + itemA._id + " B:" + itemB._id);
+  // if itemA is newer replace default sync direction (from itemB to itemA is default)
+  if (_get_timestamp(itemA) > _get_timestamp(itemB)) [itemA, itemB] = [itemB, itemA];
+  merge_objects(itemA, itemB);
+}
+
+
+/**
+ * 
+ * @param {Array} local_items with `_id` and optional `_timestamp` keys
+ * @param {Array} local_changes 
+ * @param {Array} remote_items with `_id`, `_action` from `add|remove|change` and optional `_timestamp`
+ * @param {SyncAdapter} sync_adapter 
+ */
+function sync(local_adapter, remote_adapter, local_changes) {
+  // Apply local changes from last sync
+  local_changes.forEach(local_change => {
+    if (!local_change._action) return;
+    if (!local_change._id) return;
+    if (local_change._action == "add") {
+      var item = local_adapter.get(local_change._id);
+      if (item) remote_adapter.put(item);
+    }
+    if (local_change._action == "remove") {
+      remote_adapter.del(local_change._id);
+    }
+    if (local_change._action == "change") {
+      var item = local_adapter.get(local_change._id);
+      var remote_item = remote_adapter.get(local_change._id);
+      if (item && remote_item) {
+        var diff = diff_objects(item, remote_item);
+        if (diff.filter(x => x._action == 'change').length > 0) {
+          throw new SyncConflictException();
+        }
+        sync_item(item, remote_item);
+        local_adapter.put(item);
+        remote_adapter.put(remote_item);
+      }
+      // Change but remote don't have item. Just add it
+      if (item && !remote_item) {
+        remote_adapter.put(item);
+      }
+    }
+  });
+
+  // Sync from remote
+  var remote_items = remote_adapter.list();
+  remote_items.forEach(remote_item => {
+    if (local_adapter.has(remote_item._id)) {
+      var item = local_adapter.get(remote_item._id);
+      if (item) sync_item(item, remote_adapter.get(remote_item._id));
+    } else local_adapter.put(remote_adapter.get(remote_item._id));
+  });
+
+  // Reset local changes
+  local_changes = [];
+}
+
+if (module) module.exports = {
+  ArraySyncAdapter, sync, sync_item, diff_objects, merge_objects, SyncConflictException
+};
+},{}],3:[function(require,module,exports){
 const { MemoryStore } = require("./store/memorystore");
 const Query = require('./query');
+const bisync = require('./bisync');
+const LightDBSyncAdapter = require('./lightdbsyncadapter');
 class LightDBError extends Error { }
 
 
@@ -30,6 +176,7 @@ class LightDB {
         this._table = table;
         this.options = options || {};
         this._store = this.options.store || new MemoryStore(table);
+        this._changes = [];
     }
 
     get(id) {
@@ -45,18 +192,57 @@ class LightDB {
         return this._store.list().filter(x => x._id == id).length > 0;
     }
 
-    put(object, update = false) {
-        if (update) return this._store.put(object);
-        else return this._store.new(object);
+    put(object) {
+        var result = null;
+        var update = false;
+        if (object._id) update = true;
+        if (update) {
+            result = this._store.put(object);
+            this._changes.push({ _id: object._id, _action: 'change', timestamp: Date.now() });
+        }
+        else {
+            result = this._store.new(object);
+            this._changes.push({ _id: object._id, _action: 'add', timestamp: Date.now() });
+        }
+        return result;
     }
 
     del(id) {
         this._store.del(id);
+        this._changes.push({ _id: id, _action: 'remove', timestamp: Date.now() });
+    }
+
+    sync(remotedb) {
+        var localadapter = new LightDBSyncAdapter(this);
+        var remoteadapter = new LightDBSyncAdapter(remotedb);
+        bisync.sync(localadapter, remoteadapter, this._changes);
     }
 }
 
 module.exports = { LightDB, LightDBError, Query };
-},{"./query":3,"./store/memorystore":5}],3:[function(require,module,exports){
+},{"./bisync":2,"./lightdbsyncadapter":4,"./query":5,"./store/memorystore":7}],4:[function(require,module,exports){
+class LightDBSyncAdapter {
+    constructor(lightdb) {
+        this._db = lightdb;
+    }
+    list() {
+        return this._db.list();
+    }
+    get(itemid) {
+        return this._db.get(itemid);
+    }
+    has(itemid) {
+        return this._db.get(itemid) ? true : false;
+    }
+    put(item) {
+        return this._db.put(item);
+    }
+    del(itemid) {
+        return this._db.del(itemid);
+    }
+}
+module.exports = LightDBSyncAdapter;
+},{}],5:[function(require,module,exports){
 class QueryResult {
     constructor(docs) {
         this._docs = docs || [];
@@ -126,7 +312,7 @@ class Query {
 }
 
 module.exports = Query;
-},{}],4:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 const { newid } = require('../utils');
 const axios = require('axios').default;
 
@@ -164,7 +350,7 @@ class LightDBRemoteStore {
 }
 
 module.exports = { LightDBRemoteStore };;
-},{"../utils":6,"axios":7}],5:[function(require,module,exports){
+},{"../utils":8,"axios":9}],7:[function(require,module,exports){
 const { newid } = require('../utils');
 
 class MemoryStore {
@@ -204,15 +390,15 @@ class MemoryStore {
 }
 
 module.exports = { MemoryStore };
-},{"../utils":6}],6:[function(require,module,exports){
+},{"../utils":8}],8:[function(require,module,exports){
 function newid(length = 64) {
     return '' + Math.random().toString(36).substr(2, length);
 }
 
 module.exports = { newid };
-},{}],7:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 module.exports = require('./lib/axios');
-},{"./lib/axios":9}],8:[function(require,module,exports){
+},{"./lib/axios":11}],10:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -403,7 +589,7 @@ module.exports = function xhrAdapter(config) {
   });
 };
 
-},{"../core/buildFullPath":15,"../core/createError":16,"./../core/settle":20,"./../helpers/buildURL":24,"./../helpers/cookies":26,"./../helpers/isURLSameOrigin":29,"./../helpers/parseHeaders":31,"./../utils":34}],9:[function(require,module,exports){
+},{"../core/buildFullPath":17,"../core/createError":18,"./../core/settle":22,"./../helpers/buildURL":26,"./../helpers/cookies":28,"./../helpers/isURLSameOrigin":31,"./../helpers/parseHeaders":33,"./../utils":36}],11:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -461,7 +647,7 @@ module.exports = axios;
 // Allow use of default import syntax in TypeScript
 module.exports.default = axios;
 
-},{"./cancel/Cancel":10,"./cancel/CancelToken":11,"./cancel/isCancel":12,"./core/Axios":13,"./core/mergeConfig":19,"./defaults":22,"./helpers/bind":23,"./helpers/isAxiosError":28,"./helpers/spread":32,"./utils":34}],10:[function(require,module,exports){
+},{"./cancel/Cancel":12,"./cancel/CancelToken":13,"./cancel/isCancel":14,"./core/Axios":15,"./core/mergeConfig":21,"./defaults":24,"./helpers/bind":25,"./helpers/isAxiosError":30,"./helpers/spread":34,"./utils":36}],12:[function(require,module,exports){
 'use strict';
 
 /**
@@ -482,7 +668,7 @@ Cancel.prototype.__CANCEL__ = true;
 
 module.exports = Cancel;
 
-},{}],11:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 'use strict';
 
 var Cancel = require('./Cancel');
@@ -541,14 +727,14 @@ CancelToken.source = function source() {
 
 module.exports = CancelToken;
 
-},{"./Cancel":10}],12:[function(require,module,exports){
+},{"./Cancel":12}],14:[function(require,module,exports){
 'use strict';
 
 module.exports = function isCancel(value) {
   return !!(value && value.__CANCEL__);
 };
 
-},{}],13:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -698,7 +884,7 @@ utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
 
 module.exports = Axios;
 
-},{"../helpers/buildURL":24,"../helpers/validator":33,"./../utils":34,"./InterceptorManager":14,"./dispatchRequest":17,"./mergeConfig":19}],14:[function(require,module,exports){
+},{"../helpers/buildURL":26,"../helpers/validator":35,"./../utils":36,"./InterceptorManager":16,"./dispatchRequest":19,"./mergeConfig":21}],16:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -754,7 +940,7 @@ InterceptorManager.prototype.forEach = function forEach(fn) {
 
 module.exports = InterceptorManager;
 
-},{"./../utils":34}],15:[function(require,module,exports){
+},{"./../utils":36}],17:[function(require,module,exports){
 'use strict';
 
 var isAbsoluteURL = require('../helpers/isAbsoluteURL');
@@ -776,7 +962,7 @@ module.exports = function buildFullPath(baseURL, requestedURL) {
   return requestedURL;
 };
 
-},{"../helpers/combineURLs":25,"../helpers/isAbsoluteURL":27}],16:[function(require,module,exports){
+},{"../helpers/combineURLs":27,"../helpers/isAbsoluteURL":29}],18:[function(require,module,exports){
 'use strict';
 
 var enhanceError = require('./enhanceError');
@@ -796,7 +982,7 @@ module.exports = function createError(message, config, code, request, response) 
   return enhanceError(error, config, code, request, response);
 };
 
-},{"./enhanceError":18}],17:[function(require,module,exports){
+},{"./enhanceError":20}],19:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -880,7 +1066,7 @@ module.exports = function dispatchRequest(config) {
   });
 };
 
-},{"../cancel/isCancel":12,"../defaults":22,"./../utils":34,"./transformData":21}],18:[function(require,module,exports){
+},{"../cancel/isCancel":14,"../defaults":24,"./../utils":36,"./transformData":23}],20:[function(require,module,exports){
 'use strict';
 
 /**
@@ -924,7 +1110,7 @@ module.exports = function enhanceError(error, config, code, request, response) {
   return error;
 };
 
-},{}],19:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -1013,7 +1199,7 @@ module.exports = function mergeConfig(config1, config2) {
   return config;
 };
 
-},{"../utils":34}],20:[function(require,module,exports){
+},{"../utils":36}],22:[function(require,module,exports){
 'use strict';
 
 var createError = require('./createError');
@@ -1040,7 +1226,7 @@ module.exports = function settle(resolve, reject, response) {
   }
 };
 
-},{"./createError":16}],21:[function(require,module,exports){
+},{"./createError":18}],23:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -1064,7 +1250,7 @@ module.exports = function transformData(data, headers, fns) {
   return data;
 };
 
-},{"./../defaults":22,"./../utils":34}],22:[function(require,module,exports){
+},{"./../defaults":24,"./../utils":36}],24:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -1202,7 +1388,7 @@ utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
 module.exports = defaults;
 
 }).call(this)}).call(this,require('_process'))
-},{"./adapters/http":8,"./adapters/xhr":8,"./core/enhanceError":18,"./helpers/normalizeHeaderName":30,"./utils":34,"_process":36}],23:[function(require,module,exports){
+},{"./adapters/http":10,"./adapters/xhr":10,"./core/enhanceError":20,"./helpers/normalizeHeaderName":32,"./utils":36,"_process":38}],25:[function(require,module,exports){
 'use strict';
 
 module.exports = function bind(fn, thisArg) {
@@ -1215,7 +1401,7 @@ module.exports = function bind(fn, thisArg) {
   };
 };
 
-},{}],24:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -1287,7 +1473,7 @@ module.exports = function buildURL(url, params, paramsSerializer) {
   return url;
 };
 
-},{"./../utils":34}],25:[function(require,module,exports){
+},{"./../utils":36}],27:[function(require,module,exports){
 'use strict';
 
 /**
@@ -1303,7 +1489,7 @@ module.exports = function combineURLs(baseURL, relativeURL) {
     : baseURL;
 };
 
-},{}],26:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -1358,7 +1544,7 @@ module.exports = (
     })()
 );
 
-},{"./../utils":34}],27:[function(require,module,exports){
+},{"./../utils":36}],29:[function(require,module,exports){
 'use strict';
 
 /**
@@ -1374,7 +1560,7 @@ module.exports = function isAbsoluteURL(url) {
   return /^([a-z][a-z\d\+\-\.]*:)?\/\//i.test(url);
 };
 
-},{}],28:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 'use strict';
 
 /**
@@ -1387,7 +1573,7 @@ module.exports = function isAxiosError(payload) {
   return (typeof payload === 'object') && (payload.isAxiosError === true);
 };
 
-},{}],29:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -1457,7 +1643,7 @@ module.exports = (
     })()
 );
 
-},{"./../utils":34}],30:[function(require,module,exports){
+},{"./../utils":36}],32:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -1471,7 +1657,7 @@ module.exports = function normalizeHeaderName(headers, normalizedName) {
   });
 };
 
-},{"../utils":34}],31:[function(require,module,exports){
+},{"../utils":36}],33:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -1526,7 +1712,7 @@ module.exports = function parseHeaders(headers) {
   return parsed;
 };
 
-},{"./../utils":34}],32:[function(require,module,exports){
+},{"./../utils":36}],34:[function(require,module,exports){
 'use strict';
 
 /**
@@ -1555,7 +1741,7 @@ module.exports = function spread(callback) {
   };
 };
 
-},{}],33:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 'use strict';
 
 var pkg = require('./../../package.json');
@@ -1662,7 +1848,7 @@ module.exports = {
   validators: validators
 };
 
-},{"./../../package.json":35}],34:[function(require,module,exports){
+},{"./../../package.json":37}],36:[function(require,module,exports){
 'use strict';
 
 var bind = require('./helpers/bind');
@@ -2013,7 +2199,7 @@ module.exports = {
   stripBOM: stripBOM
 };
 
-},{"./helpers/bind":23}],35:[function(require,module,exports){
+},{"./helpers/bind":25}],37:[function(require,module,exports){
 module.exports={
   "name": "axios",
   "version": "0.21.4",
@@ -2099,7 +2285,7 @@ module.exports={
   ]
 }
 
-},{}],36:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 

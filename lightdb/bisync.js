@@ -115,6 +115,12 @@ function sync(local_adapter, remote_adapter, local_changes) {
           throw new SyncConflictException();
         }
         sync_item(item, remote_item);
+        local_adapter.put(item);
+        remote_adapter.put(remote_item);
+      }
+      // Change but remote don't have item. Just add it
+      if (item && !remote_item) {
+        remote_adapter.put(item);
       }
     }
   });
