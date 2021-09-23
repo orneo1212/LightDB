@@ -24,9 +24,9 @@ test('test LightDB Sync', async function (t) {
     t.equal(c.test, 2);
 
     t.comment('- Removed item on local');
+    
     await db.del('testID2');
     await db.sync(db2);
-
     t.ok(await db2.has('testID2') == false, "Local removed item should be removed on remote after sync");
     t.equal(await db2.list().length, 1);
     t.end();

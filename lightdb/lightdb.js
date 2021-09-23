@@ -44,12 +44,13 @@ class LightDB {
     async del(id) {
         await this._store.del(id);
         this._changes.push({ _id: id, _action: 'remove', timestamp: Date.now() });
+        return;
     }
 
     async sync(remotedb) {
         var localadapter = new LightDBSyncAdapter(this);
         var remoteadapter = new LightDBSyncAdapter(remotedb);
-        await bisync.sync(localadapter, remoteadapter, this._changes);
+        return await bisync.sync(localadapter, remoteadapter, this._changes);
     }
 }
 

@@ -16,7 +16,13 @@ class ArraySyncAdapter {
     return this._objects.filter(i => i._id == itemid).length ? true : false;
   }
   async put(item) {
-    this._objects.push(item);
+    if (await this.has(item._id)) {
+      for (var i in this._objects) {
+        if (this._objects[i]._id == item._id) this._objects[i] = item;
+        break;
+      }
+    }
+    else this._objects.push(item);
   }
   async del(itemid) {
     var item = await this.get(itemid);
@@ -96,7 +102,7 @@ function sync_item(itemA, itemB) {
  */
 async function sync(local_adapter, remote_adapter, local_changes) {
   // Apply local changes from last sync
-  for (local_change of local_changes) {
+  for (local_change of [...local_changes]) {
     if (!local_change._action) return;
     if (!local_change._id) return;
     if (local_change._action == "add") {
@@ -112,7 +118,7 @@ async function sync(local_adapter, remote_adapter, local_changes) {
       if (item && remote_item) {
         var diff = diff_objects(item, remote_item);
         if (diff.filter(x => x._action == 'change').length > 0) {
-          //throw new SyncConflictException();
+          return false;
         }
         sync_item(item, remote_item);
         await local_adapter.put(item);
@@ -136,6 +142,7 @@ async function sync(local_adapter, remote_adapter, local_changes) {
 
   // Reset local changes
   local_changes = [];
+  return true;
 }
 
 if (module) module.exports = {

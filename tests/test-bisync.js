@@ -57,6 +57,7 @@ test('test bisync sync - conflict', async function (t) {
     var local = [{ _id: 1, test: 2 },];
     var remote = [{ _id: 1, test: 1 }];
     var changes = [{ _id: 1, _action: 'change' }];
-    await bisync.sync(new bisync.ArraySyncAdapter(local), new bisync.ArraySyncAdapter(remote), changes);
+    var result = await bisync.sync(new bisync.ArraySyncAdapter(local), new bisync.ArraySyncAdapter(remote), changes);
+    t.ok(result == false, "Sync should be break at conflict");
     t.end();
 });

@@ -9,7 +9,7 @@ class LightDBSyncAdapter {
         return this._db.get(itemid);
     }
     async has(itemid) {
-        return this._db.get(itemid) ? true : false;
+        return await this._db.get(itemid) ? true : false;
     }
     async put(item) {
         return this._db.put(item);
