@@ -10,7 +10,7 @@ class ArraySyncAdapter {
   }
   async get(itemid) {
     var item = this._objects.filter(i => i._id == itemid);
-    return item ? item[0] : null;
+    return item.length > 0 ? item[0] : null;
   }
   async has(itemid) {
     return this._objects.filter(i => i._id == itemid).length ? true : false;

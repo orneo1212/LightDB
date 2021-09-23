@@ -6,11 +6,7 @@ class MemoryStore {
         this._store = {};
     }
     async get(id) {
-        try {
-            return this._store[id];
-        } catch (error) {
-            return null;
-        }
+        return this._store[id] ? this._store[id] : null;
     }
 
     async list() {
