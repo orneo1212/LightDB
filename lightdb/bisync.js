@@ -112,7 +112,7 @@ async function sync(local_adapter, remote_adapter, local_changes) {
       if (item && remote_item) {
         var diff = diff_objects(item, remote_item);
         if (diff.filter(x => x._action == 'change').length > 0) {
-          throw new SyncConflictException();
+          //throw new SyncConflictException();
         }
         sync_item(item, remote_item);
         await local_adapter.put(item);
