@@ -2,20 +2,20 @@ class LightDBSyncAdapter {
     constructor(lightdb) {
         this._db = lightdb;
     }
-    list() {
-        return this._db.list();
+    async list() {
+        return await this._db.list();
     }
-    get(itemid) {
-        return this._db.get(itemid);
+    async get(itemid) {
+        return await this._db.get(itemid);
     }
-    has(itemid) {
-        return this._db.get(itemid) ? true : false;
+    async has(itemid) {
+        return await this._db.get(itemid) ? true : false;
     }
-    put(item) {
-        return this._db.put(item);
+    async put(item) {
+        return await this._db.put(item);
     }
-    del(itemid) {
-        return this._db.del(itemid);
+    async del(itemid) {
+        return await this._db.del(itemid);
     }
 }
 module.exports = LightDBSyncAdapter;

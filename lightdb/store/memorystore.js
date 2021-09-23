@@ -5,7 +5,7 @@ class MemoryStore {
         this._table = table;
         this._store = {};
     }
-    get(id) {
+    async get(id) {
         try {
             return this._store[id];
         } catch (error) {
@@ -13,25 +13,25 @@ class MemoryStore {
         }
     }
 
-    list() {
+    async list() {
         var all = Object.keys(this._store);
         return all.map(x => this._store[x]);
     }
 
-    new(object) {
+    async new(object) {
         object._timestamp = Date.now();
         object._id = newid();
         this._store[object._id] = object;
         return object._id;
     }
 
-    put(object) {
+    async put(object) {
         object._timestamp = Date.now();
         this._store[object._id] = object;
         return object._id;
     }
 
-    del(id) {
+    async del(id) {
         delete this._store[id];
     }
 }

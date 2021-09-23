@@ -3,23 +3,23 @@ class ArraySyncAdapter {
   constructor(objects) {
     this._objects = objects;
   }
-  list() {
+  async list() {
     return this._objects.map(x => {
       return { _id: x._id, _timestamp: x._timestamp };
     });
   }
-  get(itemid) {
+  async get(itemid) {
     var item = this._objects.filter(i => i._id == itemid);
     return item ? item[0] : null;
   }
-  has(itemid) {
+  async has(itemid) {
     return this._objects.filter(i => i._id == itemid).length ? true : false;
   }
-  put(item) {
+  async put(item) {
     this._objects.push(item);
   }
-  del(itemid) {
-    var item = this.get(itemid);
+  async del(itemid) {
+    var item = await this.get(itemid);
     if (item) this._objects.splice(this._objects.indexOf(item), 1);
   }
 }
@@ -94,45 +94,45 @@ function sync_item(itemA, itemB) {
  * @param {Array} remote_items with `_id`, `_action` from `add|remove|change` and optional `_timestamp`
  * @param {SyncAdapter} sync_adapter 
  */
-function sync(local_adapter, remote_adapter, local_changes) {
+async function sync(local_adapter, remote_adapter, local_changes) {
   // Apply local changes from last sync
-  local_changes.forEach(local_change => {
+  for (local_change of local_changes) {
     if (!local_change._action) return;
     if (!local_change._id) return;
     if (local_change._action == "add") {
-      var item = local_adapter.get(local_change._id);
-      if (item) remote_adapter.put(item);
+      var item = await local_adapter.get(local_change._id);
+      if (item) await remote_adapter.put(item);
     }
     if (local_change._action == "remove") {
-      remote_adapter.del(local_change._id);
+      await remote_adapter.del(local_change._id);
     }
     if (local_change._action == "change") {
-      var item = local_adapter.get(local_change._id);
-      var remote_item = remote_adapter.get(local_change._id);
+      var item = await local_adapter.get(local_change._id);
+      var remote_item = await remote_adapter.get(local_change._id);
       if (item && remote_item) {
         var diff = diff_objects(item, remote_item);
         if (diff.filter(x => x._action == 'change').length > 0) {
           throw new SyncConflictException();
         }
         sync_item(item, remote_item);
-        local_adapter.put(item);
-        remote_adapter.put(remote_item);
+        await local_adapter.put(item);
+        await remote_adapter.put(remote_item);
       }
       // Change but remote don't have item. Just add it
       if (item && !remote_item) {
-        remote_adapter.put(item);
+        await remote_adapter.put(item);
       }
     }
-  });
+  };
 
   // Sync from remote
-  var remote_items = remote_adapter.list();
-  remote_items.forEach(remote_item => {
-    if (local_adapter.has(remote_item._id)) {
-      var item = local_adapter.get(remote_item._id);
-      if (item) sync_item(item, remote_adapter.get(remote_item._id));
-    } else local_adapter.put(remote_adapter.get(remote_item._id));
-  });
+  var remote_items = await remote_adapter.list();
+  for (var remote_item of remote_items) {
+    if (await local_adapter.has(remote_item._id)) {
+      var item = await local_adapter.get(remote_item._id);
+      if (item) sync_item(item, await remote_adapter.get(remote_item._id));
+    } else await local_adapter.put(await remote_adapter.get(remote_item._id));
+  };
 
   // Reset local changes
   local_changes = [];

@@ -55,10 +55,10 @@ class Query {
         return this;
     }
 
-    run() {
+    async run() {
         var results = [];
-        var list = this._db.list();
-        var all = list.map(x => this._db.get(x._id));
+        var list = await this._db.list();
+        var all = await Promise.all(list.map(x => this._db.get(x._id)));
         if (this._conditions.length == 0) results = all.map(x => x);
         results = filter_items(all, this._conditions);
         if (this._limit && this._limit > 0) results = results.slice(0, this._limit);
