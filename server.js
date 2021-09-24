@@ -26,7 +26,7 @@ fastify.register(require('./server/db.plugin'));
 // Basic auth
 const validate = async function (username, password, req, reply) {
     var db = req.getlightDB("_users");
-    var users = new Query(db).where({ username: username, password: password }).run();
+    var users = await new Query(db).where({ username: username, password: password }).run();
     var user = users.get(0);
     if (user) {
         req.usertables = user.tables ? user.tables : [];

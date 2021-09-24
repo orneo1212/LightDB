@@ -46,7 +46,7 @@ var router = function (fastify, opts, done) {
     // Get all documents in table
     fastify.get('/:table', authandusertable_only, async (request, reply) => {
         var db = request.getlightDB(request.params.table);
-        var objects = db.list();
+        var objects = await db.list();
         return make_result(objects);
     });
 
@@ -54,7 +54,7 @@ var router = function (fastify, opts, done) {
     fastify.post('/:table', authandusertable_only, async (request, reply) => {
         if (request.body._id) return make_error(reply, 403, "ID should not exists in post");
         var db = request.getlightDB(request.params.table);
-        var id = db.put(request.body);
+        var id = await db.put(request.body);
         return make_result(id);
     });
 
@@ -62,7 +62,7 @@ var router = function (fastify, opts, done) {
     fastify.put('/:table/:id', authandusertable_only, async (request, reply) => {
         if (request.body._id != request.params.id) return make_error(reply, 403, "ID should match body _id");
         var db = request.getlightDB(request.params.table);
-        var id = db.put(request.body, true);
+        var id = await db.put(request.body, true);
         return make_result(id);
     });
 
@@ -70,20 +70,20 @@ var router = function (fastify, opts, done) {
     fastify.patch('/:table/:id', authandusertable_only, async (request, reply) => {
         if (request.body._id != request.params.id) return make_error(reply, 403, "ID should match body _id");
         var db = request.getlightDB(request.params.table);
-        if (!db.has(request.body._id)) return make_error(reply, 404, "Not exists");
-        var doc = db.get(request.body._id);
+        if (!await db.has(request.body._id)) return make_error(reply, 404, "Not exists");
+        var doc = await db.get(request.body._id);
         for (e in request.body) {
             doc[e] = request.body[e];
         }
-        var id = db.put(doc, true);
+        var id = await db.put(doc, true);
         return make_result(id);
     });
 
     // Delete existing document by ID
     fastify.delete('/:table/:id', authandusertable_only, async (request, reply) => {
         var db = request.getlightDB(request.params.table);
-        if (!db.has(request.params.id)) return make_error(reply, 404, "Not exists");
-        db.del(request.params.id);
+        if (!await db.has(request.params.id)) return make_error(reply, 404, "Not exists");
+        await db.del(request.params.id);
         return make_result(request.params.id);
     });
 
@@ -91,7 +91,7 @@ var router = function (fastify, opts, done) {
     fastify.get('/:table/:id', authandusertable_only, async (request, reply) => {
         var params = request.params;
         var db = request.getlightDB(request.params.table);
-        var obj = db.get(params.id);
+        var obj = await db.get(params.id);
         if (obj == null) {
             return make_error(reply, 404, "Not found");
         }
@@ -101,7 +101,7 @@ var router = function (fastify, opts, done) {
     // Head document by ID 
     fastify.head('/:table/:id', authandusertable_only, async (request, reply) => {
         var db = request.getlightDB(request.params.table);
-        var hasit = db.has(request.params.id);
+        var hasit = await db.has(request.params.id);
         reply.statusCode = 200;
         if (!hasit) reply.statusCode = 404;
         return {};
