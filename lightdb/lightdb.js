@@ -19,7 +19,7 @@ class LightDB {
     }
 
     async list() {
-        return this._store.list();
+        return await this._store.list();
     }
 
     async has(id) {
