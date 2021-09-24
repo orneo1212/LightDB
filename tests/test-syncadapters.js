@@ -15,6 +15,12 @@ async function test_syncadapter(adapter, t) {
     t.equal(await adapter.has("randomid"), false);
     t.equal(await adapter.has(id), true);
 
+    t.comment('- list()');
+    var list = await adapter.list();
+    t.equal(typeof list, 'object');
+    t.equal(list.length, 1);
+    t.equal(list[0]._id, id);
+
     t.comment('- get() on not existing doc');
     t.equal(await adapter.get("randomid"), null);
 

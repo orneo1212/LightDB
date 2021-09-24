@@ -13,6 +13,12 @@ async function test_store(store, t) {
     t.equal(obj._id, id);
     t.equal(obj.test, 1);
 
+    t.comment('- list()');
+    var list = await db.list();
+    t.equal(typeof list, 'object');
+    t.equal(list.length, 1);
+    t.equal(list[0]._id, id);
+
     t.comment('- has() doc');
     t.equal(await db.has("randomid"), false);
     t.equal(await db.has(id), true);
