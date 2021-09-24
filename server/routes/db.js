@@ -31,7 +31,7 @@ var router = function (fastify, opts, done) {
 
     // Get all tables names
     fastify.get('/tables', authenticated_only, async (request, reply) => {
-        var datadir = path.join(__dirname, '../../data');
+        var datadir = opts.datadir || "data";
         var tables;
         try {
             tables = fs.readdirSync(datadir);

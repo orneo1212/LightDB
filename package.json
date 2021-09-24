@@ -6,7 +6,7 @@
   "scripts": {
     "test": "tape \"tests/**/*.js\" | faucet",
     "testraw": "tape \"tests/**/*.js\"",
-    "build": "pkg -c package.json -o dist/lightdb-server server.js"
+    "build": "pkg --debug -c package.json -o dist/lightdb-server server.js"
   },
   "repository": {
     "type": "git",
@@ -39,11 +39,7 @@
       "node14-linux-x64"
     ],
     "assets": "public/**/*",
-    "scripts": [
-      "store/**/*.js",
-      "server/**/*.js",
-      "lightdb/**/*.js"
-    ],
+    "scripts": [],
     "outputPath": "dist"
   }
 }
