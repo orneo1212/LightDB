@@ -110,4 +110,4 @@ var router = function (fastify, opts, done) {
     done();
 };
 
-module.exports = { router };
+module.exports = { router, check_user_table, make_result, make_error };
