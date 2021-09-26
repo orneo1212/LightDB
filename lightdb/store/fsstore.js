@@ -1,17 +1,23 @@
 const path = require('path');
 const fs = require('fs');
 const { newid } = require('../utils');
+const { Readable } = require('stream');
 
 class FSStore {
     constructor(table, options = {}) {
         this._dir_path = options.dir_path || path.join(process.cwd(), 'data');
         this._tablepath = path.join(this._dir_path, table);
+        this._blobspath = path.join(this._dir_path, "_blobs");
     }
     _create_dir() {
         if (!fs.existsSync(this._tablepath)) fs.mkdirSync(this._tablepath);
+        if (!fs.existsSync(this._blobspath)) fs.mkdirSync(this._blobspath);
     }
     _get_path(id) {
         return path.join(this._tablepath, id + ".json");
+    }
+    _get_blob_path(id) {
+        return path.join(this._blobspath, id);
     }
     get(id) {
         try {
@@ -55,6 +61,27 @@ class FSStore {
 
     del(id) {
         if (fs.existsSync(this._get_path(id))) fs.unlinkSync(this._get_path(id));
+    }
+
+    async get_blob(blob_id) {
+        var blobpath = this._get_blob_path(blob_id);
+        if (!fs.existsSync(blobpath)) return null;
+        var stream = fs.createReadStream(blobpath, { encoding: 'utf-8' });
+        return new Promise((resolve, reject) => {
+            stream.on('error', (err) => reject(err));
+            stream.on('readable', () => resolve(stream));
+        });
+    }
+
+    async put_blob(stream) {
+        this._create_dir();
+        var id = newid();
+        var wstream = fs.createWriteStream(this._get_blob_path(id));
+        return new Promise((resolve, reject) => {
+            stream.on('end', () => { resolve(id); });
+            stream.on('error', (err) => reject(err));
+            stream.pipe(wstream);
+        });
     }
 }
 

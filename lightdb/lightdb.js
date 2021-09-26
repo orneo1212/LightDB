@@ -47,6 +47,14 @@ class LightDB {
         return;
     }
 
+    async get_blob(blob_id) {
+        return await this._store.get_blob(blob_id);
+    }
+
+    async put_blob(stream) {
+        return await this._store.put_blob(stream);
+    }
+
     async sync(remotedb) {
         var localadapter = new LightDBSyncAdapter(this);
         var remoteadapter = new LightDBSyncAdapter(remotedb);

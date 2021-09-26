@@ -3,6 +3,7 @@ const fastify = require('fastify')({ logger: true, ignoreTrailingSlash: true });
 const Query = require('./lightdb/query');
 const genericroutes = require('./server/routes/generic');
 const dbroutes = require('./server/routes/db');
+const attachmentsroutes = require('./server/routes/attachments');
 
 // SETTINGS
 const PORT = 3000;
@@ -41,6 +42,7 @@ fastify.register(require('fastify-basic-auth'), { validate, authenticate });
 // Register routers
 fastify.register(genericroutes.router, { prefix: '', publicdir: 'public' });
 fastify.register(dbroutes.router, { prefix: '/db' });
+fastify.register(attachmentsroutes.router, { prefix: '/db', attachments_dir: 'attachments' });
 
 const start = async () => {
     try {
