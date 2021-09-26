@@ -7,6 +7,7 @@ My targets:
 - Database should be fast
 - Pure file storage with caching for better IO results
 
+**This software is work in progress. Wait for release before use.**
 
 ## Example
 ```javascript
@@ -27,3 +28,6 @@ const { LightDB } = require('./lightdb/lightdb');
 
     await db.del(id);
 })();
+
+## Server
+Moved to seperate package [lightdb-server](https://github.com/orneo1212/LightDB-server)
