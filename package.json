@@ -9,7 +9,7 @@
     "test": "tape \"tests/**/*.js\" | faucet",
     "testnodemon": "nodemon -e js -x \"reset && pnpm test\"",
     "testraw": "tape \"tests/**/*.js\"",
-    "buildbrowser": "browserify --debug -e browserbundle.js -o public/lightdb.browser.js"
+    "buildbrowser": "browserify --debug -e index.browser.js -o dist/lightdb.browser.js"
   },
   "repository": {
     "type": "git",
