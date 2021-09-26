@@ -29,13 +29,6 @@ async function test_syncadapter(adapter, t) {
     await adapter.del(id);
     t.equal(await adapter.get(id), null);
 
-    t.comment('- binary blobs get/put');
-    var data = Readable.from('lorem ipsum dolar sit amit');
-    var id = await adapter.put_blob(data);
-    t.equal(typeof id, 'string');
-    var d = await adapter.get_blob(id);
-    t.equal(d, data);
-
     t.end();
 }
 
