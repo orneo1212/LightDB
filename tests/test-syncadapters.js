@@ -1,8 +1,7 @@
 var test = require('tape');
-const ArraySyncAdapter = require('../lightdb/syncadapters/arraysyncadapter');
-const { LightDB } = require("../lightdb/lightdb");
-const LightDBSyncAdapter = require('../lightdb/syncadapters/lightdbsyncadapter');
-const { Readable } = require("stream");
+const ArraySyncAdapter = require('lightdb/syncadapters/arraysyncadapter');
+const { LightDB } = require("lightdb/lightdb");
+const LightDBSyncAdapter = require('lightdb/syncadapters/lightdbsyncadapter');
 
 async function test_syncadapter(adapter, t) {
     t.comment('- put() and get()');

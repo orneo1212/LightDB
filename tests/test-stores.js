@@ -1,7 +1,7 @@
 var test = require('tape');
-const { LightDB } = require("../lightdb/lightdb");
-const FSStore = require('../lightdb/store/fsstore');
-const { MemoryStore } = require('../lightdb/store/memorystore');
+const { LightDB } = require("lightdb/lightdb");
+const FSStore = require('lightdb/store/fsstore');
+const { MemoryStore } = require('lightdb/store/memorystore');
 const { Readable } = require("stream");
 
 async function test_store(store, t) {

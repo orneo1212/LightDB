@@ -1,42 +1,35 @@
 {
   "name": "lightdb",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Lightweight JSON document store",
-  "main": "server.js",
+  "main": "index.js",
+  "author": "Marcin Świerczyński <orneo1212@gmail.com>",
+  "license": "MIT",
   "scripts": {
     "test": "tape \"tests/**/*.js\" | faucet",
     "testnodemon": "nodemon -e js -x \"reset && pnpm test\"",
     "testraw": "tape \"tests/**/*.js\"",
-    "buildbrowser": "browserify --debug -e browserbundle.js -o public/lightdb.browser.js",
-    "build": "pkg --debug -c package.json -o dist/lightdb-server server.js"
+    "buildbrowser": "browserify --debug -e browserbundle.js -o public/lightdb.browser.js"
   },
   "repository": {
     "type": "git",
-    "url": "."
+    "url": "git+https://github.com/orneo1212/LightDB"
   },
   "keywords": [
     "db",
     "json",
     "database",
-    "store"
+    "store",
+    "sync"
   ],
-  "author": "orneo1212",
-  "license": "ISC",
   "devDependencies": {
     "browserify": "^17.0.0",
     "faucet": "^0.0.1",
-    "pkg": "^5.3.2",
     "tape": "^5.3.1"
   },
   "dependencies": {
     "audit": "^0.0.6",
-    "axios": "^0.21.4",
-    "fastify": "^3.21.0",
-    "fastify-basic-auth": "^2.1.0",
-    "fastify-etag": "^2.1.0",
-    "fastify-multipart": "^5.0.0",
-    "fastify-plugin": "^3.0.0",
-    "fastify-static": "^4.2.3"
+    "axios": "^0.21.4"
   },
   "pkg": {
     "targets": [
@@ -45,5 +38,9 @@
     "assets": "public/**/*",
     "scripts": [],
     "outputPath": "dist"
-  }
+  },
+  "bugs": {
+    "url": "https://github.com/orneo1212/LightDB/issues"
+  },
+  "homepage": "https://github.com/orneo1212/LightDB#readme"
 }

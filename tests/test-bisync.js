@@ -1,6 +1,6 @@
 var test = require('tape');
-var bisync = require('../lightdb/bisync');
-const ArraySyncAdapter = require('../lightdb/syncadapters/arraysyncadapter');
+var bisync = require('lightdb/bisync');
+const ArraySyncAdapter = require('lightdb/syncadapters/arraysyncadapter');
 
 test('test bisync sync_item - remote change', function (t) {
     var objA = { "test": 1 };

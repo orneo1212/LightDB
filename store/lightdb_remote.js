@@ -32,6 +32,17 @@ class LightDBRemoteStore {
         var result = await axios.delete(this._url + `/db/${this._table}/${id}`);
         return result.data;
     }
+
+    async get_blob(blob_id) {
+        var result = await axios.get(this._url + `/blob/${blob_id}`);
+        return result.data;
+    }
+
+    async put_blob(stream) {
+        const config = { headers: { 'content-type': 'multipart/form-data' } };
+        var result = await axios.post(this._url + `/blob/`, { file: stream }, config);
+        return result.data;
+    }
 }
 
-module.exports = { LightDBRemoteStore };;
+module.exports = { LightDBRemoteStore };

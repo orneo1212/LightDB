@@ -1,6 +1,6 @@
 var test = require('tape');
-const { MemoryStore } = require('../lightdb/store/memorystore');
-const { LightDB, Query } = require('../lightdb/lightdb');
+const { MemoryStore } = require('lightdb/store/memorystore');
+const { LightDB, Query } = require('lightdb/lightdb');
 
 test('test LightDB Query', async function (t) {
     var db = new LightDB('_test', {
