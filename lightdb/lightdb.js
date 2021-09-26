@@ -1,7 +1,7 @@
 const { MemoryStore } = require("./store/memorystore");
 const Query = require('./query');
 const bisync = require('./bisync');
-const LightDBSyncAdapter = require('./lightdbsyncadapter');
+const LightDBSyncAdapter = require('./syncadapters/lightdbsyncadapter');
 class LightDBError extends Error { }
 
 

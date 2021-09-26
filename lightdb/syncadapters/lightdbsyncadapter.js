@@ -1,5 +1,8 @@
-class LightDBSyncAdapter {
+const BaseSyncAdapter = require('./basesyncadapter');
+
+class LightDBSyncAdapter extends BaseSyncAdapter {
     constructor(lightdb) {
+        super();
         this._db = lightdb;
     }
     async list() {

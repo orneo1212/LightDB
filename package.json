@@ -5,6 +5,7 @@
   "main": "server.js",
   "scripts": {
     "test": "tape \"tests/**/*.js\" | faucet",
+    "testnodemon": "nodemon -e js -x \"reset && pnpm test\"",
     "testraw": "tape \"tests/**/*.js\"",
     "buildbrowser": "browserify -e browserbundle.js -o public/lightdb.browser.js",
     "build": "pkg --debug -c package.json -o dist/lightdb-server server.js"
