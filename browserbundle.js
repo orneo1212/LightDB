@@ -15,4 +15,8 @@ function createLightDB(url, table) {
     }
     return new LightDB(table, { store: store });
 }
-global.LightDB = { createLightDB, newid, axios };
+
+global.LightDB = {
+    new: createLightDB, newid, axios,
+    MemoryStore, LightDBRemoteStore
+};

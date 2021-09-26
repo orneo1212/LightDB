@@ -69,7 +69,7 @@
     function fill_documents(documents, table) {
         var elem = document.querySelector('.documents .list')
         elem.innerHTML = "";
-        var lightdb = LightDB.createLightDB(getURL(), table);
+        var lightdb = LightDB.new(getURL(), table);
         for (var i = 0; i < documents.length; i++) {
             var doc = documents[i];
             var docelem = document.createElement('div');
@@ -106,7 +106,7 @@
                 tableelem.onclick = async function (evt) {
                     var self = this;
                     var table = this.getAttribute('data-table');
-                    var lightdb = LightDB.createLightDB(getURL(), table);
+                    var lightdb = LightDB.new(getURL(), table);
                     state.table = table;
                     var list = await lightdb.list();
                     if (list) {
@@ -125,7 +125,7 @@
         document.querySelector('.update .btn.update').onclick = async function (evt) {
             if (!state.path) return;
             var data = getDATA();
-            var lightdb = LightDB.createLightDB(getURL(), state.table);
+            var lightdb = LightDB.new(getURL(), state.table);
             await lightdb.put(JSON.parse(getDATA()), true);
         }
     });
