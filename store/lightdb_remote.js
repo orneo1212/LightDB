@@ -34,13 +34,13 @@ class LightDBRemoteStore {
     }
 
     async get_blob(blob_id) {
-        var result = await axios.get(this._url + `/blob/${blob_id}`);
+        var result = await axios.get(this._url + `/blob/${this._table}/${blob_id}`);
         return result.data;
     }
 
     async put_blob(stream) {
         const config = { headers: { 'content-type': 'multipart/form-data' } };
-        var result = await axios.post(this._url + `/blob/`, { file: stream }, config);
+        var result = await axios.post(this._url + `/blob/${this._table}`, { file: stream }, config);
         return result.data;
     }
 }
