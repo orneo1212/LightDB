@@ -60,6 +60,10 @@ class LightDB {
         var remoteadapter = new LightDBSyncAdapter(remotedb);
         return await bisync.sync(localadapter, remoteadapter, this._changes);
     }
+
+    query() {
+        return new Query(this);
+    }
 }
 
 module.exports = { LightDB, LightDBError, Query };
