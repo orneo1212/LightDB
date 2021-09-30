@@ -67,10 +67,7 @@ class FSStore {
         var blobpath = this._get_blob_path(blob_id);
         if (!fs.existsSync(blobpath)) return null;
         var stream = fs.createReadStream(blobpath, { encoding: 'utf-8' });
-        return new Promise((resolve, reject) => {
-            stream.on('error', (err) => reject(err));
-            stream.on('readable', () => resolve(stream));
-        });
+        return stream;
     }
 
     async put_blob(stream) {
