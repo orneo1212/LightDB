@@ -13,6 +13,13 @@ class LightDB {
         this._changes = [];
     }
 
+    /** Get LightDB instance for attachments table 
+     * @returns {LightDB}
+    */
+    get_attachmentsDB() {
+        return new LightDB(this._table + "_attachments", this.options);
+    }
+
     async get(id) {
         if (!id) return null;
         return this._store.get(id);
