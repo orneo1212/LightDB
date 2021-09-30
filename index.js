@@ -1,6 +1,7 @@
 const { LightDB } = require('lightdb/lightdb');
 const { MemoryStore } = require('lightdb/store/memorystore');
 const { LightDBRemoteStore } = require('lightdb/store/lightdb_remote');
+const FSStore = require('lightdb/store/fsstore');
 const { newid } = require('lightdb/utils');
 const axios = require('axios').default;
 
@@ -18,5 +19,5 @@ function createLightDB(url, table) {
 
 module.exports = {
     new: createLightDB, newid, axios,
-    LightDB, MemoryStore, LightDBRemoteStore
+    LightDB, MemoryStore, LightDBRemoteStore, FSStore
 };
